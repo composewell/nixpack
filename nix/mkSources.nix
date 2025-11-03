@@ -20,14 +20,17 @@ let
     profiling = true;
   };
 
-# type: "github"
-#   https:
-#   owner:
-#   repo:
-#   rev:
-#   branch:
-#   subdir:
-#   flags:
+# Example:
+#  streamly-core = {
+#   type = "github";
+#   https = false;
+#   owner = "composewell";
+#   repo = "streamly";
+#   rev = "b469a10f4f7f4d9ebaad828ba008dd7ac6f04849";
+#   branch = "custom";
+#   subdir = "/core";
+#   flags = [];
+#  };
 
   mkGithubURL = owner: repo:
     "git@github.com:${owner}/${repo}.git";

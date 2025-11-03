@@ -9,6 +9,17 @@ layers = [
 {
   #streamly = hackage "0.11.0" "sha256-JMZAwJHqmDxN/CCDFhfuv77xmAx1JVhvYFDxMKyQoGk=";
   #unicode-data = hackageProf "0.6.0" "sha256-gW1E5VFwZcUX5v1dvi3INDDqUuwCcOTjCR5+lOW3Obc==";
+  # Custom definition example::
+  #  streamly-core = {
+  #   type = "github";
+  #   https = false;
+  #   owner = "composewell";
+  #   repo = "streamly";
+  #   rev = "b469a10f4f7f4d9ebaad828ba008dd7ac6f04849";
+  #   branch = "custom";
+  #   subdir = "/core";
+  #   flags = [];
+  #  };
 }
 
 # Second layer, overrides the above layer
@@ -25,6 +36,6 @@ layers = [
 ];
 
 # Upper bounds of the dependencies of these packages are relaxed.
-jailbreaks = [ ];
+# jailbreaks = [ "streamly-core" ];
 
 }
