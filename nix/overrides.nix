@@ -44,7 +44,7 @@ let
 
   # XXX Use nixpkgs.fetchgit with sha256 for reproducibility
   deriveGit = super: drvLabel: url: rev: branch: subdir: flags: prof:
-    builtins.trace "url=${url}"
+    #builtins.trace "url=${url}"
     (nixpkgs.haskell.lib.overrideCabal (let
       src = fetchGit {
         url = url;

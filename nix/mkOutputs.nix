@@ -54,6 +54,7 @@ in {
   devShells = forAllSystems (system: { default = (mkEnv system).shell; });
   packages = forAllSystems (system: (mkEnv system).nixpkgs.haskellPackages);
   nixpkgs = forAllSystems (system: (mkEnv system).nixpkgs);
-  sources = forAllSystems (system: (mkEnv system).sources);
+  # This does not depend on the system
+  sources = (mkEnv "x86_64-linux").sources;
   nixpack = basepkgs.nixpack;
 }
