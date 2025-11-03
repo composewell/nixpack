@@ -106,11 +106,11 @@ in
     jailbreaks = uniq (getJailbreaks a ++ getJailbreaks b);
   };
 
-  haskellSource = name: path: mkSrcs:
+  haskellSource = name: path: {nixpack}:
       {
         layers = [
         {
-          ${name} = mkSrcs.local path;
+          ${name} = nixpack.mkSources.local path;
         }
         ];
       };
