@@ -9,27 +9,15 @@
   };
 
   outputs = { self, nixpkgs, nixpkgs-darwin, basepkgs }:
-    let
-      nixpack = basepkgs.nixpack;
-      src1 = basepkgs.sources;
-      src2 = import ./sources.nix {inherit nixpack;};
-    in nixpack.mkOutputs {
-      inherit nixpkgs;
-      inherit nixpkgs-darwin;
-      inherit nixpack;
-      nixpkgsOptions = {
-            config.allowUnfree = true;
-            config.allowBroken = true;
-          };
-      envOptions = {
-            name = "my-project";
-            sources = nixpack.lib.mergeSources src1 src2;
-            packages = import ./packages.nix;
-            # Use default to utilize the cache,
-            # specific compiler for reproducibility
-            compiler = "default";
-            hoogle = false;
-            isDev = true;
-      };
+    basepkgs.nixpack.mkOutputs {
+      inherit nixpkgs nixpkgs-darwin basepkgs;
+      name = "my-project";
+      # Simpler, single package inline declaration
+      sources = basepkgs.nixpack.lib.localSource "pkgname" ./.;
+      packages = basepkgs.nixpack.lib.devPackage "pkgname";
+
+      # Use files as usual for more complicated multiple dev packages
+      #sources = import ./sources.nix;
+      #packages = import ./packages.nix;
     };
 }

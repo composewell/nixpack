@@ -115,7 +115,7 @@ in
         ];
       };
 
-  devPackage = name: nixpkgs:
+  devPackage = name: {nixpkgs}:
       {
       dev-packages =
       [ nixpkgs.haskellPackages.${name}
