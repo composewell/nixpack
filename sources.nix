@@ -18,16 +18,18 @@ layers = [
   #   rev = "b469a10f4f7f4d9ebaad828ba008dd7ac6f04849";
   #   branch = "custom";
   #   subdir = "/core";
-  #   flags = [];
+  #   c2nix = []; # cabal2nix options
+  #   flags = []; # cabal configure flags
   #  };
 }
 
 # Second layer, overrides the above layer
 {
-  #bench-show = composewellBranchFlags "bench-show"
+  #bench-show = composewellBranchOpts "bench-show"
   #               "dc07910c4442bbaf22a8093bf6ada7fee6a57322"
   #               "remove-deps-for-nix"
-  #               [ "--flags no-charts" ];
+  #               [ "--flag no-charts" ]
+  #               [ "--flag no-charts" ];
 
 }
 

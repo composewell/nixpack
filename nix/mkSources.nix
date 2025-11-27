@@ -29,7 +29,8 @@ let
 #   rev = "b469a10f4f7f4d9ebaad828ba008dd7ac6f04849";
 #   branch = "custom";
 #   subdir = "/core";
-#   flags = [];
+#   c2nix = []; # cabal2nix options
+#   flags = []; # configure flags
 #  };
 
   mkGithubURL = owner: repo:
@@ -38,44 +39,41 @@ let
   mkGithubHttpsURL = owner: repo:
     "https://github.com/${owner}/${repo}.git";
 
-  githubAll = owner: repo: rev: branch: subdir: flags: {
+  githubAll = owner: repo: rev: branch: subdir: c2nix: flags: {
     type = "github";
     https = false;
-    inherit owner repo rev branch subdir flags;
+    inherit owner repo rev branch subdir c2nix flags;
   };
 
   master = "master";
 
-  githubBranchFlags = owner: repo: rev: branch: flags:
-    githubAll owner repo rev branch "" flags;
+  githubBranchOpts = owner: repo: rev: branch: c2nix: flags:
+    githubAll owner repo rev branch "" c2nix flags;
 
-  githubFlags = owner: repo: rev: flags:
-    githubBranchFlags owner repo rev master flags;
+  githubOpts = owner: repo: rev: c2nix: flags:
+    githubBranchOpts owner repo rev master c2nix flags;
 
   githubBranch = owner: repo: rev: branch:
-    githubBranchFlags owner repo rev branch [];
+    githubBranchOpts owner repo rev branch [] [];
 
   githubSubdir = owner: repo: rev: subdir:
-    githubAll owner repo rev master subdir [];
+    githubAll owner repo rev master subdir [] [];
 
   github = owner: repo: rev:
-    githubFlags owner repo rev [];
+    githubOpts owner repo rev [] [];
 
 # type: "local"
 #   path:
-#   subdir:
+#   c2nix:
 #   flags:
 
-  localSubdirFlags = path: subdir: flags: {
+  localOpts = path: c2nix: flags: {
     type = "local";
-    inherit path subdir flags;
+    inherit path c2nix flags;
   };
 
-  localSubdir = path: subdir:
-    localSubdirFlags path subdir [];
-
   local = path:
-    localSubdir path "";
+    localOpts path [] [];
 
 in
 {
@@ -83,12 +81,11 @@ in
   inherit hackageProf;
   inherit mkGithubURL;
   inherit mkGithubHttpsURL;
-  inherit githubBranchFlags;
-  inherit githubFlags;
+  inherit githubBranchOpts;
+  inherit githubOpts;
   inherit githubBranch;
   inherit githubSubdir;
   inherit github;
-  inherit localSubdirFlags;
-  inherit localSubdir;
+  inherit localOpts;
   inherit local;
 }

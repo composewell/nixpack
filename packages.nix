@@ -1,7 +1,7 @@
 { nixpkgs }:
 {
 # General packages, haskell or non-haskell will be installed in the
-# environment..
+# environment.
 packages =
     [
     ];

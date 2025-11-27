@@ -26,11 +26,11 @@ let
 
   # we can possibly avoid adding our package to HaskellPackages like
   # in the case of nix-shell for a single package?
-  deriveLocal = super: drvLabel: path: subdir: flags: prof:
+  deriveLocal = super: drvLabel: path: c2nix: flags: prof:
   let
-    fullPath = "${builtins.toString path}${subdir}";
+    fullPath = "${builtins.toString path}";
     drv = nixpkgs.haskell.lib.overrideCabal (
-      super.callCabal2nix drvLabel fullPath { }
+      super.callCabal2nixWithOptions drvLabel fullPath (builtins.concatStringsSep " " c2nix) { }
     ) (old: {
       librarySystemDepends = libDepends;
       enableLibraryProfiling = prof;
@@ -43,7 +43,7 @@ let
     drv.overrideAttrs (_: { src = path; });
 
   # XXX Use nixpkgs.fetchgit with sha256 for reproducibility
-  deriveGit = super: drvLabel: url: rev: branch: subdir: flags: prof:
+  deriveGit = super: drvLabel: url: rev: branch: subdir: c2nix: flags: prof:
     #builtins.trace "url=${url}"
     (nixpkgs.haskell.lib.overrideCabal (let
       src = fetchGit {
@@ -51,7 +51,8 @@ let
         rev = rev;
         ref = branch;
       };
-    in super.callCabal2nix drvLabel "${src}${subdir}" { }) (old: {
+    in super.callCabal2nixWithOptions drvLabel "${src}${subdir}" (builtins.concatStringsSep " " c2nix) { }
+    ) (old: {
       librarySystemDepends = libDepends;
       enableLibraryProfiling = prof;
       doHaddock = withHaddock;
@@ -71,10 +72,10 @@ let
               then sourceUtils.mkGithubHttpsURL spec.owner spec.repo
               else sourceUtils.mkGithubURL spec.owner spec.repo;
             drvLabel = "${spec.owner}/${spec.repo}";
-        in deriveGit super drvLabel url spec.rev spec.branch spec.subdir spec.flags false
+        in deriveGit super drvLabel url spec.rev spec.branch spec.subdir spec.c2nix spec.flags false
       else if spec.type == "local" then
         let drvLabel = "local";
-        in deriveLocal super drvLabel spec.path spec.subdir spec.flags false
+        in deriveLocal super drvLabel spec.path spec.c2nix spec.flags false
       else
         throw "Unknown package source type: ${spec.type}"
     ) sources;

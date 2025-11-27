@@ -4,20 +4,20 @@ let
   cw = "composewell";
   master = "master";
 
-  composewellBranchFlags = repo: rev: branch: flags:
-    githubBranchFlags cw repo rev branch flags;
-  composewellFlags = repo: rev: flags:
-    composewellBranchFlags repo rev master flags;
+  composewellBranchOpts = repo: rev: branch: c2nix: flags:
+    githubBranchOpts cw repo rev branch c2nix flags;
+  composewellOpts = repo: rev: c2nix: flags:
+    composewellBranchOpts repo rev master c2nix flags;
   composewellBranch = repo: rev: branch:
-    composewellBranchFlags repo rev branch [];
+    composewellBranchOpts repo rev branch [] [];
   composewellSubdir = repo: rev: subdir:
     githubSubdir cw repo rev subdir;
   composewell = repo: rev:
-    composewellFlags repo rev [];
+    composewellOpts repo rev [] [];
 in
 {
-  inherit composewellBranchFlags;
-  inherit composewellFlags;
+  inherit composewellBranchOpts;
+  inherit composewellOpts;
   inherit composewellBranch;
   inherit composewellSubdir;
   inherit composewell;

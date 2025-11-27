@@ -106,7 +106,7 @@ in
     jailbreaks = uniq (getJailbreaks a ++ getJailbreaks b);
   };
 
-  haskellSource = name: path: {nixpack}:
+  localSource = name: path: {nixpack}:
       {
         layers = [
         {
@@ -115,7 +115,7 @@ in
         ];
       };
 
-  haskellPackage = name: nixpkgs:
+  devPackage = name: nixpkgs:
       {
       dev-packages =
       [ nixpkgs.haskellPackages.${name}
