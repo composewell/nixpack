@@ -19,18 +19,53 @@ let
       buildInputs = inputs ++ cocoa;
       # Use a better prompt
       shellHook = ''
+        # We use an empty cabal config to force default config
+        export CABAL_CONFIG=/dev/null
+
+        # If desired we can use a custom cabal config file and set
+        # specific config params using cabal user-config update.
         #CFG_DIR="$HOME/.config/streamly-packages"
         #CFG_FILE="$CFG_DIR/config.empty"
         #mkdir -p "$CFG_DIR"
         #export CABAL_DIR="$CFG_DIR"
-        export CABAL_CONFIG=/dev/null
         #This is commented for hls to work with VSCode
         #cabal user-config update -a "jobs: 1"
-        export PS1="$PS1(haskell) "
-        #if test -n "$PS_SHELL"
-        #then
-        #  export PS1="$PS_SHELL\[$bldred\](nix:cw)\[$txtrst\] "
-        #fi
+
+        # Modify the prompt to make the user aware that they are in
+        # a nix shell.  However we just source the shell rc file and
+        # prompt can be set there as desired.
+        # export PS1="$PS1(haskell) "
+
+        # Nix does not source the user's bashrc by default.
+        # Invoke the rc file to set your usual shell environment
+        # including the prompt. You can use the IN_NIX_SHELL env var to
+        # set a nix specific prompt if needed.
+        case "$SHELL" in
+          */bash)
+            # Source Bash config only if file exists and shell is interactive
+            if [ -n "$PS1" ] && [ -f "$HOME/.bashrc" ]; then
+              . "$HOME/.bashrc"
+            fi
+            ;;
+          */zsh)
+            # Source Zsh RC
+            if [ -o interactive ] && [ -f "$HOME/.zshrc" ]; then
+              . "$HOME/.zshrc"
+            fi
+            ;;
+          */fish)
+            # Fish uses a different syntax: we invoke fish explicitly
+            if [ -f "$HOME/.config/fish/config.fish" ]; then
+              fish --private -C "source $HOME/.config/fish/config.fish"
+            fi
+            ;;
+          *)
+            # Generic POSIX shell: only source .profile if interactive
+            if [ -n "$PS1" ] && [ -f "$HOME/.profile" ]; then
+              . "$HOME/.profile"
+            fi
+            ;;
+        esac
       '';
     };
 
