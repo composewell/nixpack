@@ -1,7 +1,7 @@
 let
-  #--------------------------------------------------------------------------
-  # Declaring packages
-  #--------------------------------------------------------------------------
+#--------------------------------------------------------------------------
+# Declaring packages
+#--------------------------------------------------------------------------
 
 # type: "hackage"
 #   version:
@@ -22,13 +22,30 @@ let
 
 # Example:
 #  streamly-core = {
+#   type = "git";
+#   url = "/x/y";
+#   rev = "b469a10f4f7f4d9ebaad828ba008dd7ac6f04849";
+#
+#   branch = "master";
+#   subdir = "/core";
+#   build = "copy"; # "haskell"
+#   # Haskell build options
+#   c2nix = []; # cabal2nix options
+#   flags = []; # configure flags
+#  };
+
+# Example:
+#  streamly-core = {
 #   type = "github";
 #   https = false;
 #   owner = "composewell";
 #   repo = "streamly";
 #   rev = "b469a10f4f7f4d9ebaad828ba008dd7ac6f04849";
+#
 #   branch = "custom";
 #   subdir = "/core";
+#   build = "copy"; # "haskell"
+#   # Haskell build options
 #   c2nix = []; # cabal2nix options
 #   flags = []; # configure flags
 #  };
@@ -79,13 +96,16 @@ in
 {
   inherit hackage;
   inherit hackageProf;
+
   inherit mkGithubURL;
   inherit mkGithubHttpsURL;
+
   inherit githubBranchOpts;
   inherit githubOpts;
   inherit githubBranch;
   inherit githubSubdir;
   inherit github;
+
   inherit localOpts;
   inherit local;
 }

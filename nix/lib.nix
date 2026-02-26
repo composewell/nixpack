@@ -93,6 +93,17 @@ in
       inherit additionalBinFilesInSrc;
     };
 
+  copyRepo1 = nixpkgs: name: url: rev: branch: additionalBinFilesInSrc:
+    copySrc nixpkgs {
+      name = "${name}";
+      src = fetchGit {
+          url = url;
+          rev = rev;
+          ref = branch;
+      };
+      inherit additionalBinFilesInSrc;
+    };
+
   mergeSources = a: b:
   let
     uniq = builtins.foldl' (acc: x:
