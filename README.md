@@ -70,7 +70,7 @@ layers = [ { streamly = local ./.; } ];
 ## Finding Outdated Revisions in `sources.nix`
 
 If any of the sources have been updated upstream you can find if the
-sources in your bundle or project are stale and eed to be updated.
+sources in your bundle or project are stale and need to be updated.
 
 Use the `(nixpack/nix).listSources` function to create a manifest of sources
 and use `nixpack/bin/nixpack-outdated.sh` on the result to find the stale sources.
