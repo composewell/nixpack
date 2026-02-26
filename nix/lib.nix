@@ -1,8 +1,8 @@
 let
   sources = import ./mkSources.nix;
 
-  # A simple derivation that copies the bin dir, the etc dir, and additional
-  # bin files from src to out dir.
+# A simple derivation that copies the bin dir, the etc dir, and additional
+# bin files from src to out dir.
 copySrc = nixpkgs: { name, src, additionalBinFilesInSrc ? [], localBin ? true }:
   with nixpkgs.pkgs;
   let
@@ -57,7 +57,7 @@ copySrc = nixpkgs: { name, src, additionalBinFilesInSrc ? [], localBin ? true }:
   };
 in
 {
-  # XXX omit the name get it from the filename in destination
+  # XXX omit the name argument get it from the filename in destination
   writeShellScriptTo = nixpkgs: name: destination: text:
     nixpkgs.writeTextFile {
       inherit name;
@@ -74,6 +74,8 @@ in
 
   inherit copySrc;
 
+  # Like copySrc but copies from a remote git repo or a git repo at a local
+  # file system path.
   copyRepo = nixpkgs: name: spec: {repo_prefix ? null, additionalBinFilesInSrc ? []}:
     copySrc nixpkgs {
       name = "${name}";
@@ -106,6 +108,8 @@ in
     jailbreaks = uniq (getJailbreaks a ++ getJailbreaks b);
   };
 
+  # Equivalent to a "sources.nix" with "name" as the single source at a local
+  # file system "path".
   localSource = name: path: {nixpack}:
       {
         layers = [
@@ -115,6 +119,7 @@ in
         ];
       };
 
+  # Equivalent to a "packages.nix" with "name" as the single dev package.
   devPackage = name: {nixpkgs}:
       {
       dev-packages =
