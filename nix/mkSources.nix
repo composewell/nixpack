@@ -78,7 +78,7 @@ let
 #  some-utils = {
 #   type = "local";
 #
-#   path = "/x/y"; # local file system path
+#   path = /x/y; # local file system path
 #
 #   # Rest of the options same as type = "git".
 #  };

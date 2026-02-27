@@ -63,10 +63,12 @@ let
     in hlib.overrideCabal orig (old: overrideOptions flags prof);
 
   deriveGitCopy = super: drvLabel: url: rev: branch: inlineBins: tagLocal:
-    libUtils.copyRepo1 super drvLabel url rev branch inlineBins tagLocal;
+    # Note super is haskellPackages, we need to pass nixpkgs for lib
+    libUtils.copyRepo1 nixpkgs drvLabel url rev branch inlineBins tagLocal;
 
   deriveLocalCopy = super: drvLabel: path: inlineBins: tagLocal:
-    libUtils.copyPath1 super drvLabel path inlineBins tagLocal;
+    # Note super is haskellPackages, we need to pass nixpkgs for lib
+    libUtils.copyPath1 nixpkgs drvLabel path inlineBins tagLocal;
 
 makeOverrides = super: sources:
   builtins.mapAttrs (name: spec:
@@ -85,7 +87,7 @@ makeOverrides = super: sources:
 
       # Copy build options
       inlineBins = spec.inlineBins or [];
-      tagLocal = spec.tagLocal or [];
+      tagLocal = spec.tagLocal or true;
     in
 
     if type == "hackage" then
@@ -98,7 +100,7 @@ makeOverrides = super: sources:
       if build == "haskell" then
         overrideGitHaskell super name spec.url spec.rev branch subdir c2nix flags prof
       else if build == "copy" then
-        deriveGitCopy super spec.url spec.rev branch inlineBins tagLocal
+        deriveGitCopy super name spec.url spec.rev branch inlineBins tagLocal
       else
         throw "Unknown build type for git source: ${build}"
 
@@ -106,6 +108,7 @@ makeOverrides = super: sources:
       if build == "haskell" then
         overrideLocalHaskell super name spec.path subdir c2nix flags prof
       else if build == "copy" then
+        #builtins.trace "name=${name}"
         deriveLocalCopy super name spec.path inlineBins tagLocal
       else
         throw "Unknown build type for local source: ${build}"
