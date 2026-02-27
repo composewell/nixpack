@@ -31,15 +31,20 @@ let
       configureFlags = flags;
     };
 
+  origDrv = super: drvLabel: path: subdir: c2nix:
+    let loc = if subdir == "" then "${path}" else "${path}/${subdir}";
+    in
+      super.callCabal2nixWithOptions
+          drvLabel
+          loc
+          (builtins.concatStringsSep " " c2nix)
+          {};
+
   # we can possibly avoid adding our package to HaskellPackages like
   # in the case of nix-shell for a single package?
   overrideLocalHaskell = super: drvLabel: path: subdir: c2nix: flags: prof:
     let
-      orig = super.callCabal2nixWithOptions
-        drvLabel
-        "${builtins.toString path}/${subdir}"
-        (builtins.concatStringsSep " " c2nix)
-        {};
+      orig = origDrv super drvLabel path subdir c2nix;
       drv = hlib.overrideCabal orig (old: overrideOptions flags prof);
     in
       # Keep live source, don't copy to /nix/store
@@ -54,11 +59,7 @@ let
         rev = rev;
         ref = branch;
       };
-      orig = super.callCabal2nixWithOptions
-        drvLabel
-        "${path}/${subdir}"
-        (builtins.concatStringsSep " " c2nix)
-        {};
+      orig = origDrv super drvLabel path subdir c2nix;
     in hlib.overrideCabal orig (old: overrideOptions flags prof);
 
   deriveGitCopy = super: drvLabel: url: rev: branch: xfiles:
