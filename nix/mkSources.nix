@@ -3,7 +3,9 @@ let
 # Declaring packages
 #--------------------------------------------------------------------------
 
-# type: "hackage"
+# Example:
+#  streamly-core = {
+#   type = "hackage";
 #   version:
 #   sha256:
 #   profiling:
@@ -23,31 +25,23 @@ let
 # Example:
 #  streamly-core = {
 #   type = "git";
-#   url = "/x/y";
-#   rev = "b469a10f4f7f4d9ebaad828ba008dd7ac6f04849";
 #
-#   branch = "master";
-#   subdir = "/core";
-#   build = "copy"; # "haskell"
-#   # Haskell build options
-#   c2nix = []; # cabal2nix options
-#   flags = []; # configure flags
-#  };
-
-# Example:
-#  streamly-core = {
-#   type = "github";
-#   https = false;
-#   owner = "composewell";
-#   repo = "streamly";
+#   # ssh (git@github.com/) or https (https://github.com/) url
+#   url = "https://github.com/composewell/streamly";
 #   rev = "b469a10f4f7f4d9ebaad828ba008dd7ac6f04849";
-#
 #   branch = "custom";
-#   subdir = "/core";
-#   build = "copy"; # "haskell"
-#   # Haskell build options
+#
+#   build = "haskell"; # or "copy"
+#
+#   # When build == "haskell"
+#   subdir = "core";
 #   c2nix = []; # cabal2nix options
 #   flags = []; # configure flags
+#
+#   # When build == "copy"
+#   # Copies the bin, etc directories from the source
+#   # See copyRepo function in nixpack
+#   xfiles = []; # Additional files to put in bin dir
 #  };
 
   mkGithubURL = owner: repo:
@@ -57,9 +51,9 @@ let
     "https://github.com/${owner}/${repo}.git";
 
   githubAll = owner: repo: rev: branch: subdir: c2nix: flags: {
-    type = "github";
-    https = false;
-    inherit owner repo rev branch subdir c2nix flags;
+    type = "git";
+    url = mkGithubURL owner repo;
+    inherit rev branch subdir c2nix flags;
   };
 
   master = "master";
@@ -79,11 +73,14 @@ let
   github = owner: repo: rev:
     githubOpts owner repo rev [] [];
 
-# type: "local"
-#   path:
-#   c2nix:
-#   flags:
-
+# Example:
+#  some-utils = {
+#   type = "local";
+#
+#   path = "/x/y"; # local file system path
+#
+#   # Rest of the options same as type = "git".
+#  };
   localOpts = path: c2nix: flags: {
     type = "local";
     inherit path c2nix flags;

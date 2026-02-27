@@ -3,7 +3,6 @@
 # XXX pass profiling as an option
 { nixpkgs, libDepends, withHaddock }:
 let
-  sourceUtils = import ./mkSources.nix;
   libUtils = import ./lib.nix;
 
   overrideHackage = super: pkg: ver: sha256: prof:
