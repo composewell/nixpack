@@ -62,11 +62,11 @@ let
       orig = origDrv super drvLabel path subdir c2nix;
     in hlib.overrideCabal orig (old: overrideOptions flags prof);
 
-  deriveGitCopy = super: drvLabel: url: rev: branch: xfiles:
-    libUtils.copyRepo1 nixpkgs drvLabel url rev branch xfiles;
+  deriveGitCopy = super: drvLabel: url: rev: branch: inlineBins: tagLocal:
+    libUtils.copyRepo1 super drvLabel url rev branch inlineBins tagLocal;
 
-  deriveLocalCopy = super: drvLabel: path: xfiles:
-    throw "Copy build type in local repo not implemented";
+  deriveLocalCopy = super: drvLabel: path: inlineBins: tagLocal:
+    libUtils.copyPath1 super drvLabel path inlineBins tagLocal;
 
 makeOverrides = super: sources:
   builtins.mapAttrs (name: spec:
@@ -84,7 +84,8 @@ makeOverrides = super: sources:
       prof   = spec.profiling or false;
 
       # Copy build options
-      xfiles = spec.xfiles or [];
+      inlineBins = spec.inlineBins or [];
+      tagLocal = spec.tagLocal or [];
     in
 
     if type == "hackage" then
@@ -97,7 +98,7 @@ makeOverrides = super: sources:
       if build == "haskell" then
         overrideGitHaskell super name spec.url spec.rev branch subdir c2nix flags prof
       else if build == "copy" then
-        deriveGitCopy super spec.url spec.rev branch xfiles
+        deriveGitCopy super spec.url spec.rev branch inlineBins tagLocal
       else
         throw "Unknown build type for git source: ${build}"
 
@@ -105,7 +106,7 @@ makeOverrides = super: sources:
       if build == "haskell" then
         overrideLocalHaskell super name spec.path subdir c2nix flags prof
       else if build == "copy" then
-        deriveLocalCopy super spec.path xfiles
+        deriveLocalCopy super name spec.path inlineBins tagLocal
       else
         throw "Unknown build type for local source: ${build}"
 

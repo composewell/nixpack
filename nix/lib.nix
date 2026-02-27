@@ -93,7 +93,7 @@ in
       inherit additionalBinFilesInSrc;
     };
 
-  copyRepo1 = nixpkgs: name: url: rev: branch: additionalBinFilesInSrc:
+  copyRepo1 = nixpkgs: name: url: rev: branch: additionalBinFilesInSrc: localBin:
     copySrc nixpkgs {
       name = "${name}";
       src = fetchGit {
@@ -102,6 +102,15 @@ in
           ref = branch;
       };
       inherit additionalBinFilesInSrc;
+      inherit localBin;
+    };
+
+  copyPath1 = nixpkgs: name: path: additionalBinFilesInSrc: localBin:
+    copySrc nixpkgs {
+      name = "${name}";
+      src = path;
+      inherit additionalBinFilesInSrc;
+      inherit localBin;
     };
 
   mergeSources = a: b:

@@ -41,7 +41,8 @@ let
 #   # When build == "copy"
 #   # Copies the bin, etc directories from the source
 #   # See copyRepo function in nixpack
-#   xfiles = []; # Additional files to put in bin dir
+#   inlineBins = []; # Additional files to put in bin dir
+#   tagLocal = true; # symlink the bins in ~/.nix-profile/local
 #  };
 
   mkGithubURL = owner: repo:
