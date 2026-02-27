@@ -6,7 +6,7 @@ let
   sourceUtils = import ./mkSources.nix;
   libUtils = import ./lib.nix;
 
-  hackageWith = super: pkg: ver: sha256: prof:
+  deriveHackage = super: pkg: ver: sha256: prof:
     nixpkgs.haskell.lib.overrideCabal
       (super.callHackageDirect
         { pkg = pkg;
@@ -18,12 +18,6 @@ let
           doHaddock = withHaddock;
           doCheck = false;
         });
-
-  deriveHackageProf = super: pkg: ver: sha256:
-    hackageWith super pkg ver sha256 true;
-
-  deriveHackage = super: pkg: ver: sha256:
-    hackageWith super pkg ver sha256 false;
 
   # we can possibly avoid adding our package to HaskellPackages like
   # in the case of nix-shell for a single package?
@@ -76,11 +70,8 @@ let
       if spec.type == "hackage" then
         # build = copy is invalid in this case
         let
-          prof = if spec ? profiling then spec.profiling else false;
-        in
-        if prof == true then
-          deriveHackageProf super name spec.version spec.sha256
-        else deriveHackage super name spec.version spec.sha256
+          prof = spec.profiling or false;
+        in deriveHackage super name spec.version spec.sha256 prof
       else
         let
           branch = if spec ? branch then spec.branch else "master";
