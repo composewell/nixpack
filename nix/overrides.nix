@@ -68,39 +68,49 @@ let
   deriveLocalCopy = super: drvLabel: path: xfiles:
     throw "Copy build type in local repo not implemented";
 
-  makeOverrides = super: sources:
-    builtins.mapAttrs (name: spec:
-      if spec.type == "hackage" then
-        # build = copy is invalid in this case
-        let
-          prof = spec.profiling or false;
-        in overrideHackage super name spec.version spec.sha256 prof
+makeOverrides = super: sources:
+  builtins.mapAttrs (name: spec:
+    let
+      type   = spec.type;
+      build  = spec.build or "haskell";
+
+      # Location
+      branch = spec.branch or "master";
+      subdir = spec.subdir or "";
+
+      # Haskell build options
+      c2nix  = spec.c2nix  or [];
+      flags  = spec.flags  or [];
+      prof   = spec.profiling or false;
+
+      # Copy build options
+      xfiles = spec.xfiles or [];
+    in
+
+    if type == "hackage" then
+      if build == "haskell" then
+        overrideHackage super name spec.version spec.sha256 prof
       else
-        let
-          branch = if spec ? branch then spec.branch else "master";
-          build = if spec ? build then spec.build else "haskell";
-          # Haskell build only options
-          subdir = if spec ? subdir then spec.subdir else "";
-          c2nix = if spec ? c2nix then spec.c2nix else [];
-          flags = if spec ? flags then spec.flags else [];
-          prof = if spec ? profiling then spec.profiling else false;
-          # Copy build only options
-          xfiles = if spec ? xfiles then spec.xfiles else [];
-        in
-        if spec.type == "git" then
-             if build == "haskell"
-             then overrideGitHaskell super name spec.url spec.rev branch subdir c2nix flags prof
-             else if build == "copy"
-             then deriveGitCopy super spec.url spec.rev branch xfiles
-             else throw "Unknown build type: ${build}"
-      else if spec.type == "local" then
-             if build == "haskell"
-             then overrideLocalHaskell super name spec.path subdir spec.c2nix spec.flags prof
-             else if build == "copy"
-             then deriveLocalCopy super spec.path xfiles
-             else throw "Unknown build type: ${build}"
+        throw "Unknown build type for Hackage source: ${build}"
+
+    else if type == "git" then
+      if build == "haskell" then
+        overrideGitHaskell super name spec.url spec.rev branch subdir c2nix flags prof
+      else if build == "copy" then
+        deriveGitCopy super spec.url spec.rev branch xfiles
       else
-        throw "Unknown package source type: ${spec.type}"
-    ) sources;
+        throw "Unknown build type for git source: ${build}"
+
+    else if type == "local" then
+      if build == "haskell" then
+        overrideLocalHaskell super name spec.path subdir c2nix flags prof
+      else if build == "copy" then
+        deriveLocalCopy super spec.path xfiles
+      else
+        throw "Unknown build type for local source: ${build}"
+
+    else
+      throw "Unknown package source type: ${type}"
+  ) sources;
 
 in makeOverrides
