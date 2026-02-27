@@ -31,7 +31,7 @@ let
 #   rev = "b469a10f4f7f4d9ebaad828ba008dd7ac6f04849";
 #   branch = "custom";
 #
-#   build = "haskell"; # or "copy"
+#   build = "haskell"; # or "copy" or "import"
 #
 #   # When build == "haskell"
 #   subdir = "core";

@@ -1,22 +1,24 @@
 let
-  sources = import ./mkSources.nix;
+sources = import ./mkSources.nix;
+
+isPathLike = name: value:
+    builtins.isPath value
+    || (builtins.isAttrs value && value ? outPath)
+    || throw ''
+         ${name} error:
+           expected a path-like value:
+             • a path literal (./.)
+             • or a derivation / fetchGit / fetchTarball result
+           got type: ${builtins.typeOf value}
+           value: ${toString value}
+       '';
 
 # A simple derivation that copies the bin dir, the etc dir, and additional
 # bin files from src to out dir.
 copySrc = nixpkgs: { name, src, additionalBinFilesInSrc ? [], localBin ? true }:
   # If we use a string insted of path type literal it won't be relative to the
   # source file where we specified it, and we depend on that.
-  assert
-    builtins.isPath src
-    || (builtins.isAttrs src && src ? outPath)
-    || throw ''
-         copySrc error:
-           expected 'src' to be:
-             • a path literal (./.)
-             • or a fetchGit/fetchTarball result
-           got type: ${builtins.typeOf src}
-           value: ${toString src}
-       '';
+  assert isPathLike "copySrc" src;
   with nixpkgs.pkgs;
   let
     additionalBinFilesAsStr =
@@ -85,6 +87,7 @@ in
       '';
     };
 
+  inherit isPathLike;
   inherit copySrc;
 
   # Like copySrc but copies from a remote git repo or a git repo at a local

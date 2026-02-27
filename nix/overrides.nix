@@ -32,7 +32,8 @@ let
     };
 
   origDrv = super: drvLabel: path: subdir: c2nix:
-    let loc = if subdir == "" then "${path}" else "${path}/${subdir}";
+    assert libUtils.isPathLike "origDrv" path;
+    let loc = if subdir == "" then path else path + "/${subdir}";
     in
       super.callCabal2nixWithOptions
           drvLabel
@@ -67,8 +68,25 @@ let
     libUtils.copyRepo1 nixpkgs drvLabel url rev branch inlineBins tagLocal;
 
   deriveLocalCopy = super: drvLabel: path: inlineBins: tagLocal:
+    assert libUtils.isPathLike "deriveLocalCopy" path;
     # Note super is haskellPackages, we need to pass nixpkgs for lib
     libUtils.copyPath1 nixpkgs drvLabel path inlineBins tagLocal;
+
+  deriveGitImport = super: drvLabel: url: rev: branch: subdir:
+    let
+      src = fetchGit {
+          url = url;
+          rev = rev;
+          ref = branch;
+      };
+      loc = if subdir == "" then src else src + "/${subdir}";
+    in import loc {inherit nixpkgs;};
+
+  deriveLocalImport = super: drvLabel: path: subdir:
+    assert libUtils.isPathLike "deriveLocalCopy" path;
+    let
+      loc = if subdir == "" then path else path + "/${subdir}";
+    in import loc {inherit nixpkgs;};
 
 makeOverrides = super: sources:
   builtins.mapAttrs (name: spec:
@@ -101,6 +119,8 @@ makeOverrides = super: sources:
         overrideGitHaskell super name spec.url spec.rev branch subdir c2nix flags prof
       else if build == "copy" then
         deriveGitCopy super name spec.url spec.rev branch inlineBins tagLocal
+      else if build == "import" then
+        deriveGitImport super name spec.url spec.rev branch subdir
       else
         throw "Unknown build type for git source: ${build}"
 
@@ -109,7 +129,10 @@ makeOverrides = super: sources:
         overrideLocalHaskell super name spec.path subdir c2nix flags prof
       else if build == "copy" then
         #builtins.trace "name=${name}"
+        # XXX can add subdir here as well
         deriveLocalCopy super name spec.path inlineBins tagLocal
+      else if build == "import" then
+        deriveLocalImport super name spec.path subdir
       else
         throw "Unknown build type for local source: ${build}"
 
