@@ -63,14 +63,14 @@ let
       orig = origDrv super drvLabel path subdir c2nix;
     in hlib.overrideCabal orig (old: overrideOptions flags prof);
 
-  deriveGitCopy = super: drvLabel: url: rev: branch: inlineBins: tagLocal:
+  deriveGitCopy = super: drvLabel: url: rev: branch: binFiles: tagLocal:
     # Note super is haskellPackages, we need to pass nixpkgs for lib
-    libUtils.copyRepo1 nixpkgs drvLabel url rev branch inlineBins tagLocal;
+    libUtils.copyRepo1 nixpkgs drvLabel url rev branch binFiles tagLocal;
 
-  deriveLocalCopy = super: drvLabel: path: inlineBins: tagLocal:
+  deriveLocalCopy = super: drvLabel: path: binFiles: tagLocal:
     assert libUtils.isPathLike "deriveLocalCopy" path;
     # Note super is haskellPackages, we need to pass nixpkgs for lib
-    libUtils.copyPath1 nixpkgs drvLabel path inlineBins tagLocal;
+    libUtils.copyPath1 nixpkgs drvLabel path binFiles tagLocal;
 
   deriveGitImport = super: drvLabel: url: rev: branch: subdir:
     let
@@ -88,8 +88,24 @@ let
       loc = if subdir == "" then path else path + "/${subdir}";
     in import loc {inherit nixpkgs;};
 
-makeOverrides = super: sources:
-  builtins.mapAttrs (name: spec:
+# Convert githost type to git type.
+preProcessGitHost = name: spec:
+    let
+      # githost type options
+      https = spec.https or true;
+      user = spec.user or "git";
+      localPrefix = spec.localPrefix or null;
+
+      url =
+        if localPrefix != null then
+          localPrefix + "/${spec.repo}"
+        else if https then
+          "https://${spec.host}/${spec.owner}/${spec.repo}.git"
+        else
+          "${user}@${spec.host}:${spec.owner}/${spec.repo}.git";
+    in spec // { type = "git"; inherit url; };
+
+processSpec = super: name: spec:
     let
       type   = spec.type;
       build  = spec.build or "haskell";
@@ -104,9 +120,14 @@ makeOverrides = super: sources:
       prof   = spec.profiling or false;
 
       # Copy build options
-      inlineBins = spec.inlineBins or [];
+      binFiles = spec.binFiles or [];
       tagLocal = spec.tagLocal or true;
+
     in
+
+    #--------------------------------------------------------------------------
+    # Hackage
+    #--------------------------------------------------------------------------
 
     if type == "hackage" then
       if build == "haskell" then
@@ -114,15 +135,23 @@ makeOverrides = super: sources:
       else
         throw "Unknown build type for Hackage source: ${build}"
 
+    #--------------------------------------------------------------------------
+    # git
+    #--------------------------------------------------------------------------
+
     else if type == "git" then
       if build == "haskell" then
         overrideGitHaskell super name spec.url spec.rev branch subdir c2nix flags prof
       else if build == "copy" then
-        deriveGitCopy super name spec.url spec.rev branch inlineBins tagLocal
+        deriveGitCopy super name spec.url spec.rev branch binFiles tagLocal
       else if build == "import" then
         deriveGitImport super name spec.url spec.rev branch subdir
       else
         throw "Unknown build type for git source: ${build}"
+
+    #--------------------------------------------------------------------------
+    # local
+    #--------------------------------------------------------------------------
 
     else if type == "local" then
       if build == "haskell" then
@@ -130,14 +159,24 @@ makeOverrides = super: sources:
       else if build == "copy" then
         #builtins.trace "name=${name}"
         # XXX can add subdir here as well
-        deriveLocalCopy super name spec.path inlineBins tagLocal
+        deriveLocalCopy super name spec.path binFiles tagLocal
       else if build == "import" then
         deriveLocalImport super name spec.path subdir
       else
         throw "Unknown build type for local source: ${build}"
 
     else
-      throw "Unknown package source type: ${type}"
+      throw "Unknown package source type: ${type}";
+
+makeOverrides = super: sources:
+  builtins.mapAttrs (name: spec:
+    let spec1 =
+          if spec.type == "githost" then
+            preProcessGitHost name spec
+          else spec;
+    in
+      #builtins.trace "name=${name}"
+        (processSpec super name spec1)
   ) sources;
 
 in makeOverrides
