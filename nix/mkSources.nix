@@ -58,7 +58,8 @@ let
 # compose the URL using different parts, this allows us to overlay the protocol
 # part of the URL https or ssh without having to parse the URL. Also, if
 # required later, the URL can be constructed in a host specific way using the
-# owner and repo info.
+# owner and repo info. Another reason is that scripts like "list-sources" can
+# work on a per-host basis for checking the latest commit-ids automatically.
 
 # Example:
 # Where the field is optional default values are filled.
@@ -96,19 +97,19 @@ let
   githubAll = owner: repo: rev: branch: subdir: c2nix: flags:
     gh owner repo rev // { inherit branch subdir c2nix flags; };
 
-  master = "master";
+  defaultBranch = "master";
 
   githubBranchOpts = owner: repo: rev: branch: c2nix: flags:
     githubAll owner repo rev branch "" c2nix flags;
 
   githubOpts = owner: repo: rev: c2nix: flags:
-    githubBranchOpts owner repo rev master c2nix flags;
+    githubBranchOpts owner repo rev defaultBranch c2nix flags;
 
   githubBranch = owner: repo: rev: branch:
     githubBranchOpts owner repo rev branch [] [];
 
   githubSubdir = owner: repo: rev: subdir:
-    githubAll owner repo rev master subdir [] [];
+    githubAll owner repo rev defaultBranch subdir [] [];
 
   github = owner: repo: rev:
     githubOpts owner repo rev [] [];
@@ -135,6 +136,7 @@ in
   inherit git;
   inherit gh;
   inherit local;
+  inherit defaultBranch;
 
   # To be removed
   inherit hackageProf;

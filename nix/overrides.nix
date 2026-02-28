@@ -4,6 +4,7 @@
 { nixpkgs, libDepends, withHaddock }:
 let
   libUtils = import ./lib.nix;
+  mkSources = import ./mkSources.nix;
 
   overrideHackage = super: pkg: ver: sha256: prof:
     let
@@ -111,7 +112,7 @@ processSpec = super: name: spec:
       build  = spec.build or "haskell";
 
       # Location
-      branch = spec.branch or "master";
+      branch = spec.branch or mkSources.defaultBranch;
       subdir = spec.subdir or "";
 
       # Haskell build options

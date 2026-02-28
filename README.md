@@ -72,16 +72,21 @@ layers = [ { streamly = local ./.; } ];
 If any of the sources have been updated upstream you can find if the
 sources in your bundle or project are stale and need to be updated.
 
-Use the `(nixpack/nix).listSources` function to create a manifest of sources
-and use `nixpack/bin/nixpack-outdated.sh` on the result to find the stale sources.
+Use the `nixpack.listSources` function to create a CSV
+file listing the commits used in a sources.nix and use
+`<nixpack>/bin/nixpack-outdated.sh` on the result to find the stale
+sources.
 
-For example, you can do that by running these commands from the repo root:
+For example, if your sources are listed in ./sources.nix:
 ```
+nix-build -E '(import <nixpack-repo>).nixpack.listSources { sources = ./sources.nix; }'
+<nixpack-repo>/bin/nixpack-outdated.sh ./result
+```
+
+<!--
+If you want to use nixpack directly from github:
 nix-build -E '
-  let
-    nixpackSrc = builtins.fetchTarball "https://github.com/composewell/nixpack/archive/d8c97426bd697.tar.gz";
-    nixpack = import (nixpackSrc + "/nix");
-  in nixpack.listSources { sources = ./sources.nix; }
+  let nixpackSrc = builtins.fetchTarball "https://github.com/composewell/nixpack/archive/35d7f15832800.tar.gz";
+  in (import nixpackSrc).nixpack.listSources { sources = ./sources.nix; }
 '
-bin/nixpack-outdated.sh ./result
-```
+-->
