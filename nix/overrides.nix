@@ -64,6 +64,49 @@ let
       orig = origDrv super drvLabel path subdir c2nix;
     in hlib.overrideCabal orig (old: overrideOptions flags prof);
 
+  overrideNpm = super: drvLabel: scope: version: sha256: npmDepsHash: packageLockJson: extraAttrs:
+    let
+      urlName = if scope == "" then drvLabel else "@${scope}/${drvLabel}";
+      tarName = "${drvLabel}-${version}.tgz";
+      src = nixpkgs.fetchzip {
+        url = "https://registry.npmjs.org/${urlName}/-/${tarName}";
+        hash = sha256;
+      };
+      # Packages fetched from the npm registry use fetchzip rather
+      # than fetchGit, so git-specific attributes like rev, shortRev,
+      # lastModified etc. are absent.  We patch them onto the src
+      # with sensible fallbacks so derivations that reference these
+      # attributes (e.g. to embed a build version) don't fail.
+      srcWithLock =
+        let
+          base = if packageLockJson == null then src else
+            nixpkgs.runCommand "source-with-lock" {} ''
+              cp -r ${src} $out
+              chmod -R u+w $out
+              cp ${packageLockJson} $out/package-lock.json
+            '';
+        in base // {
+          rev = version;
+          shortRev = builtins.substring 0 7 version;
+          revCount = 0;
+          lastModified = 0;
+          lastModifiedDate = "19700101000000";
+          narHash = src.narHash;
+        };
+    in super.${drvLabel}.overrideAttrs (old: {
+        inherit version;
+        src = srcWithLock;
+        npmDeps = nixpkgs.fetchNpmDeps {
+          src = srcWithLock;
+          hash = npmDepsHash;
+        };
+        # These do not apply to pre-built npm tarballs.
+        dontNpmBuild = true;
+        postPatch = "";
+        installPhase = null;
+        postInstall = "";
+      } // extraAttrs);
+
   deriveGitCopy = super: drvLabel: url: rev: branch: binFiles: tagLocal:
     # Note super is haskellPackages, we need to pass nixpkgs for lib
     libUtils.copyRepo1 nixpkgs drvLabel url rev branch binFiles tagLocal;
@@ -124,6 +167,14 @@ processSpec = super: name: spec:
       binFiles = spec.binFiles or [];
       tagLocal = spec.tagLocal or true;
 
+      # npmjs build options
+      scope        = spec.scope        or "";
+      version      = spec.version      or "";
+      sha256       = spec.sha256       or "";
+      npmDepsHash  = spec.npmDepsHash  or "";
+      packageLockJson = spec.packageLockJson or null;
+      extraAttrs   = spec.extraAttrs   or {};
+
     in
 
     #--------------------------------------------------------------------------
@@ -131,10 +182,7 @@ processSpec = super: name: spec:
     #--------------------------------------------------------------------------
 
     if type == "hackage" then
-      if build == "haskell" then
         overrideHackage super name spec.version spec.sha256 prof
-      else
-        throw "Unknown build type for Hackage source: ${build}"
 
     #--------------------------------------------------------------------------
     # git
@@ -166,9 +214,15 @@ processSpec = super: name: spec:
       else
         throw "Unknown build type for local source: ${build}"
 
+    else if type == "npmjs" then
+        overrideNpm nixpkgs name scope version sha256 npmDepsHash packageLockJson extraAttrs
+
     else
       throw "Unknown package source type: ${type}";
 
+# XXX when build is "copy"/"import" instead of going to haskellPackages we
+# should put them in localPackages. These are not overrides. Anything that is
+# not an override should go in localPackages.
 makeOverrides = super: sources:
   builtins.mapAttrs (name: spec:
     let spec1 =

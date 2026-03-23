@@ -130,6 +130,14 @@ let
   localOpts = path: c2nix: flags:
     local path // { inherit c2nix; inherit flags; };
 
+  # use nixpack/bin/gen-npm-drv.sh to generate derivations
+  # npmjsWith = scope: version: sha256: npmDepsHash: packageLockJson: extraAttrs:
+  # npmjs scope version sha256 npmDepsHash // { inherit packageLockJson extraAttrs; };
+  npmjs = scope: version: sha256: npmDepsHash:
+    { type = "npmjs";
+      inherit scope version sha256 npmDepsHash;
+    };
+
 in
 {
   inherit hackage;
@@ -137,6 +145,7 @@ in
   inherit gh;
   inherit local;
   inherit defaultBranch;
+  inherit npmjs;
 
   # To be removed
   inherit hackageProf;
