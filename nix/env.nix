@@ -81,6 +81,7 @@ let
     version = "0.1";
     pname = "${name}-shell-pkg";
     license = "BSD-3-Clause";
+    src = nixpkgs.emptyDirectory;
 
     libraryHaskellDepends = requiredPackages.libraries;
     setupHaskellDepends = with haskellPackages; [ cabal-doctest ];
