@@ -30,11 +30,12 @@ let
 
   mkEnv = system:
     let
-      nixpkgs1 =
+      nixpkgsPath =
         if builtins.match ".*darwin.*" system != null
         then nixpkgs-darwin
         else nixpkgs;
-      pkgs = import nixpkgs1 (nixpkgsOptions // { inherit system; });
+      pkgs = builtins.trace "Using nixpkgs rev: ${nixpkgs.rev}"
+        (import nixpkgsPath (nixpkgsOptions // { inherit system; }));
       pkgs1 = pkgs.extend (self: super: {
         nixpack = basepkgs.nixpack;
       });
