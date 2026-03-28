@@ -14,10 +14,11 @@ let
     basepkgs.nixpack.lib.mergeSources
       basepkgs.sources (sources {nixpack = basepkgs.nixpack;});
 
-  cocoa = if builtins.match ".*darwin.*" nixpkgs.system != null then
-    [ nixpkgs.darwin.apple_sdk.frameworks.Cocoa ]
-  else
-    [ ];
+  cocoa =
+    if nixpkgs.stdenv.isDarwin then
+      [ nixpkgs.darwin.apple_sdk.frameworks.Cocoa ]
+    else
+      [ ];
 
   mkoverrides = (import ./overrides.nix) {
     inherit nixpkgs;
