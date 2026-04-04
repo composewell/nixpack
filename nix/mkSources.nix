@@ -3,6 +3,10 @@ let
 # Declaring packages
 #--------------------------------------------------------------------------
 
+  fromNix = {
+    type = "nixpkgs";
+  };
+
 # Example:
 #  streamly-core = {
 #   type = "hackage";
@@ -19,6 +23,8 @@ let
   hackageProf = version: sha256:
     hackage version sha256 // { profiling = true; };
 
+# XXX rename c2nix to cabal2nix-flags
+# XXX rename flags to cabal-flags
 # Example:
 # Where the field is optional default values are filled.
 #  streamly = {
@@ -140,22 +146,24 @@ let
 
 in
 {
+  inherit defaultBranch;
+
+  inherit fromNix;
   inherit hackage;
   inherit git;
   inherit gh;
   inherit local;
-  inherit defaultBranch;
   inherit npmjs;
 
   # To be removed
-  inherit hackageProf;
-  inherit mkGithubURL;
-  inherit mkGithubHttpsURL;
+  #inherit hackageProf;
+  #inherit mkGithubURL;
+  #inherit mkGithubHttpsURL;
 
-  inherit githubBranchOpts;
-  inherit githubOpts;
-  inherit githubBranch;
-  inherit githubSubdir;
-  inherit github;
-  inherit localOpts;
+  #inherit githubBranchOpts;
+  #inherit githubOpts;
+  #inherit githubBranch;
+  #inherit githubSubdir;
+  #inherit github;
+  #inherit localOpts;
 }

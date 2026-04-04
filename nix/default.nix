@@ -15,7 +15,7 @@ in
   inherit disableProfiling; # used for creating pkg flakes, see README.
 
 # utility functions to declare sources.
-  mkSources = import ./mkSources.nix // import ./cwSources.nix;
+  mkSources = import ./mkSources.nix;
 # takes sources, returns derivation.
   listSources = import ./list-sources.nix;
   lib = import ./lib.nix;

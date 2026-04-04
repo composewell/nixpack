@@ -6,7 +6,27 @@ let
   libUtils = import ./lib.nix;
   mkSources = import ./mkSources.nix;
 
-  overrideHackage = super: pkg: ver: sha256: prof:
+  overrideNixpkgs = super: pkgName: prof: flags: forceVer:
+    let
+      # Grab the existing package from the Haskell set
+      orig = super.${pkgName};
+      
+      options = {
+        # Do not change anything to unnecessarily recompile
+        enableLibraryProfiling = prof;
+        # XXX use default for these when not specified
+        #doHaddock = withHaddock; # Assumes withHaddock is in scope
+        #doCheck = false;
+        configureFlags = flags;
+      };
+    in
+      assert nixpkgs.lib.assertMsg (forceVer == null || forceVer == orig.version)
+        "Version of ${pkgName} must be ${forceVer} but is ${orig.version}";
+      hlib.overrideCabal orig (old: options);
+
+  /*
+  # This gets the oldest revision on hackage.
+  overrideHackage = super: pkg: ver: sha256: prof: flags:
     let
       src =
         { pkg = pkg;
@@ -17,9 +37,48 @@ let
         { enableLibraryProfiling = prof;
           doHaddock = withHaddock;
           doCheck = false;
+          configureFlags = flags;
         };
       orig = super.callHackageDirect src {};
     in hlib.overrideCabal orig (old: options);
+  */
+
+  # This gets the latest revision from hackage.
+  overrideHackage = super: pkg: ver: rev: sha256: cabalSha256: prof: flags:
+    let
+      # 1. Always fetch the base source tarball
+      src = builtins.fetchTarball {
+        url = "https://hackage.haskell.org/package/${pkg}-${ver}/${pkg}-${ver}.tar.gz";
+        sha256 = sha256;
+      };
+
+      # 2. Only fetch the latest cabal revision if a hash is provided
+      latestCabal = if cabalSha256 != null then
+        builtins.fetchurl {
+          #url = "https://hackage.haskell.org/package/${pkg}-${ver}/revisions/latest.cabal";
+          url = "https://hackage.haskell.org/package/${pkg}-${ver}/revision/${rev}.cabal";
+          sha256 = cabalSha256;
+        }
+      else null;
+
+      orig = super.callCabal2nix pkg src { };
+      
+      # 3. Build the options set
+      options = {
+        enableLibraryProfiling = prof;
+        doHaddock = withHaddock;
+        doCheck = false;
+        configureFlags = flags;
+      };
+    in
+      hlib.overrideCabal orig (old: options // (
+        # Only apply the postPatch if we actually downloaded a new cabal file
+        if latestCabal != null then {
+          postPatch = (old.postPatch or "") + ''
+            cp ${latestCabal} ${pkg}.cabal
+          '';
+        } else {}
+      ));
 
   hlib = nixpkgs.haskell.lib;
 
@@ -158,10 +217,18 @@ processSpec = super: name: spec:
       branch = spec.branch or mkSources.defaultBranch;
       subdir = spec.subdir or "";
 
+      forceVer = spec.version or null;
+
       # Haskell build options
       c2nix  = spec.c2nix  or [];
       flags  = spec.flags  or [];
       prof   = spec.profiling or false;
+      revision = spec.rev or null;
+      cabalSha256 =
+        if revision != null
+        then
+          spec.cabalSha256
+        else null;
 
       # Copy build options
       binFiles = spec.binFiles or [];
@@ -177,12 +244,15 @@ processSpec = super: name: spec:
 
     in
 
+    if type == "nixpkgs" then
+        overrideNixpkgs super name (spec.profiling or true) flags forceVer
+
     #--------------------------------------------------------------------------
     # Hackage
     #--------------------------------------------------------------------------
 
-    if type == "hackage" then
-        overrideHackage super name spec.version spec.sha256 prof
+    else if type == "hackage" then
+        overrideHackage super name spec.version revision spec.sha256 cabalSha256 prof flags
 
     #--------------------------------------------------------------------------
     # git
