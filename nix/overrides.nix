@@ -164,7 +164,8 @@ let
         postPatch = "";
         installPhase = null;
         postInstall = "";
-      } // extraAttrs);
+        preConfigure = "";
+      } // extraAttrs super);
 
   deriveGitCopy = super: drvLabel: url: rev: branch: binFiles: tagLocal:
     # Note super is haskellPackages, we need to pass nixpkgs for lib
@@ -240,7 +241,7 @@ processSpec = super: name: spec:
       sha256       = spec.sha256       or "";
       npmDepsHash  = spec.npmDepsHash  or "";
       packageLockJson = spec.packageLockJson or null;
-      extraAttrs   = spec.extraAttrs   or {};
+      extraAttrs   = spec.extraAttrs   or (pkgs: {});
 
     in
 
