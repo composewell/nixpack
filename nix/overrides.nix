@@ -43,6 +43,9 @@ let
     in hlib.overrideCabal orig (old: options);
   */
 
+  # XXX We can use callCabal2nix --revision for fetching the specified
+  # revision. Is there a way to get the latest using that?
+
   # This gets the latest revision from hackage.
   overrideHackage = super: pkg: ver: rev: sha256: cabalSha256: prof: flags:
     let
@@ -105,8 +108,16 @@ let
   # in the case of nix-shell for a single package?
   overrideLocalHaskell = super: drvLabel: path: subdir: c2nix: flags: prof:
     let
-      orig = origDrv super drvLabel path subdir c2nix;
-      drv = hlib.overrideCabal orig (old: overrideOptions flags prof);
+      # XXX Should we use doBenchmark = true; in overrideOptions?
+      orig = origDrv super drvLabel path subdir (c2nix ++ [" --benchmark"]);
+
+      # For local packages we should use doCheck = true, because we want
+      # to run tests during development. If we do not use doCheck test
+      # dependencies are not installed in the shell.
+      # For disabling test dependencies we can pass --no-check in the
+      # c2nix options.
+      drv = hlib.overrideCabal orig 
+            (old: (overrideOptions flags prof // {doCheck = true;}));
     in
       # Keep live source, don't copy to /nix/store
       drv.overrideAttrs (_: { src = path; });

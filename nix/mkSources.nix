@@ -7,6 +7,7 @@ let
     type = "nixpkgs";
   };
 
+# XXX revision can be passed in the c2nix flags "--revision"
 # Example:
 #  streamly-core = {
 #   type = "hackage";
