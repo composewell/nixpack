@@ -2,10 +2,10 @@
 { nixpkgs }:
 let
   # XXX we should move this to packages.nix
-  cocoa = if builtins.match ".*darwin.*" nixpkgs.system != null then
-    [ nixpkgs.darwin.apple_sdk.frameworks.Cocoa ]
-  else
-    [ ];
+  #cocoa = if builtins.match ".*darwin.*" nixpkgs.system != null then
+  #  [ nixpkgs.darwin.apple-sdk.frameworks.Cocoa ]
+  #else
+  #  [ ];
 
   mkShell = hpkgs: pkgs: inputs: doHoogle: doBench:
     hpkgs.shellFor {
@@ -16,7 +16,8 @@ let
       doBenchmark = doBench;
       # XXX On macOS cabal2nix does not seem to generate a dependency on
       # Cocoa framework.
-      buildInputs = inputs ++ cocoa;
+      # buildInputs = inputs ++ cocoa;
+      buildInputs = inputs;
       # Use a better prompt
       shellHook = ''
         # We use an empty cabal config to force default config

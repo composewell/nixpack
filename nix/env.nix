@@ -14,15 +14,16 @@ let
     basepkgs.nixpack.lib.mergeSources
       basepkgs.sources (sources {nixpack = basepkgs.nixpack;});
 
-  cocoa =
-    if nixpkgs.stdenv.isDarwin then
-      [ nixpkgs.darwin.apple_sdk.frameworks.Cocoa ]
-    else
-      [ ];
+  #cocoa =
+  #  if nixpkgs.stdenv.isDarwin then
+  #    [ nixpkgs.darwin.apple-sdk.frameworks.Cocoa ]
+  #  else
+  #    [ ];
 
   mkoverrides = (import ./overrides.nix) {
     inherit nixpkgs;
-    libDepends = cocoa;
+    #libDepends = cocoa;
+    libDepends = [];
     withHaddock = installHoogle;
   };
 
@@ -88,7 +89,7 @@ let
     setupHaskellDepends = with haskellPackages; [ cabal-doctest ];
     # XXX On macOS cabal2nix does not seem to generate a
     # dependency on Cocoa framework.
-    executableFrameworkDepends = cocoa;
+    # executableFrameworkDepends = cocoa;
   };
 
   # XXX we can have a depsOf section in packages.nix such that only
