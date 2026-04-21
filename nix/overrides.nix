@@ -163,7 +163,8 @@ let
           lastModifiedDate = "19700101000000";
           narHash = src.narHash;
         };
-    in super.${drvLabel}.overrideAttrs (old: {
+    in nixpkgs.buildNpmPackage ({
+        pname = drvLabel;
         inherit version;
         src = srcWithLock;
         npmDeps = nixpkgs.fetchNpmDeps {
@@ -172,10 +173,10 @@ let
         };
         # These do not apply to pre-built npm tarballs.
         dontNpmBuild = true;
-        postPatch = "";
-        installPhase = null;
-        postInstall = "";
-        preConfigure = "";
+        # postPatch = "";
+        # installPhase = null;
+        # postInstall = "";
+        # preConfigure = "";
       } // extraAttrs super);
 
   deriveGitCopy = super: drvLabel: url: rev: branch: binFiles: tagLocal:
